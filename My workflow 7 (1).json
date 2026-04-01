@@ -1,0 +1,251 @@
+{
+  "name": "My workflow 7",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "documentId": {
+          "__rl": true,
+          "value": "1XHV2N_v2xyU7c54OmZNu-2WlVjcgpv-bQbJ13fdARjE",
+          "mode": "list",
+          "cachedResultName": "Employee survey",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1XHV2N_v2xyU7c54OmZNu-2WlVjcgpv-bQbJ13fdARjE/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1697123190,
+          "mode": "list",
+          "cachedResultName": "Form responses 1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1XHV2N_v2xyU7c54OmZNu-2WlVjcgpv-bQbJ13fdARjE/edit#gid=1697123190"
+        },
+        "event": "rowAdded",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        8
+      ],
+      "id": "7bb451b0-af66-4f27-8ceb-b41b5e1bfae1",
+      "name": "Google Sheets Trigger",
+      "credentials": {
+        "googleSheetsTriggerOAuth2Api": {
+          "id": "4Abj3tJZw6MqMR4O",
+          "name": "Google Sheets Trigger account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const satisfaction = $input.item.json[\"On a scale of 1–5, how satisfied are you with your job?  \"];\nconst managerSupport = $input.item.json[\"How would you rate your manager's support and feedback?  \"];\nconst workHours = String($input.item.json[\" How many hours do you work on average per day?  \"] || \"\");\nconst careerGrowth = $input.item.json[\"Do you see good career growth opportunities in the company?  \"];\nconst leaveIntent = $input.item.json[\"How likely are you to leave the company in the next 6 months?  \"];\n\nlet riskScore = 0;\n\n// Low satisfaction (1-2 = high risk)\nif (satisfaction <= 2) riskScore += 25;\nelse if (satisfaction === 3) riskScore += 10;\n\n// Poor manager support (1-2 = high risk)\nif (managerSupport <= 2) riskScore += 20;\nelse if (managerSupport === 3) riskScore += 10;\n\n// Long working hours\nif (workHours.includes(\"10\")) riskScore += 20;\nelse if (workHours.includes(\"8-9\") || workHours.includes(\"9\")) riskScore += 10;\n\n// No career growth\nif (careerGrowth === \"No\") riskScore += 20;\n\n// High leave intent (4-5 = high risk)\nif (leaveIntent >= 4) riskScore += 15;\n\n// Determine risk level\nlet riskLevel = \"Low\";\nif (riskScore >= 60) riskLevel = \"High\";\nelse if (riskScore >= 30) riskLevel = \"Medium\";\n\nreturn {\n  ...($input.item.json),\n  riskScore,\n  riskLevel\n};"
+      },
+      "id": "a1674239-4cfa-43ef-8902-331b7b93a16d",
+      "name": "Calculate Risk Score",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        224,
+        8
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "conditions": [
+            {
+              "leftValue": "={{ $json.riskLevel }}",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              },
+              "rightValue": "High"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "ab51eb06-c981-4ae0-91f2-071656edd04d",
+      "name": "Route by Risk Level",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        448,
+        8
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "1",
+              "name": "alertMessage",
+              "value": "=🚨 High-Risk Employee Alert\n\nEmployee: {{ $json[\"Email address\"] }}\nRisk Score: {{ $json.riskScore }}/100\nRisk Level: {{ $json.riskLevel }}\n\nSurvey Results:\n• Job Satisfaction: {{ $json[\"On a scale of 1–5, how satisfied are you with your job?  \"] }}/5\n• Manager Support: {{ $json[\"How would you rate your manager's support and feedback?  \"] }}/5\n• Work Hours: {{ $json[\" How many hours do you work on average per day?  \"] }}\n• Career Growth: {{ $json[\"Do you see good career growth opportunities in the company?  \"] }}\n• Leave Intent: {{ $json[\"How likely are you to leave the company in the next 6 months?  \"] }}/5\n\n⚠️ Action Required: Schedule a 1-on-1 meeting with this employee immediately.",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "27ecf5aa-d709-48c2-adba-f28d1fab8866",
+      "name": "Format Alert Message",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        672,
+        -64
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "1",
+              "name": "email",
+              "value": "={{ $json[\"Email address\"] }}",
+              "type": "string"
+            },
+            {
+              "id": "2",
+              "name": "timestamp",
+              "value": "={{ $json.Timestamp }}",
+              "type": "string"
+            },
+            {
+              "id": "3",
+              "name": "riskScore",
+              "value": "={{ $json.riskScore }}",
+              "type": "number"
+            },
+            {
+              "id": "4",
+              "name": "riskLevel",
+              "value": "={{ $json.riskLevel }}",
+              "type": "string"
+            },
+            {
+              "id": "5",
+              "name": "jobSatisfaction",
+              "value": "={{ $json[\"On a scale of 1–5, how satisfied are you with your job?  \"] }}",
+              "type": "number"
+            },
+            {
+              "id": "6",
+              "name": "managerSupport",
+              "value": "={{ $json[\"How would you rate your manager's support and feedback?  \"] }}",
+              "type": "number"
+            },
+            {
+              "id": "7",
+              "name": "workHours",
+              "value": "={{ $json[\" How many hours do you work on average per day?  \"] }}",
+              "type": "string"
+            },
+            {
+              "id": "8",
+              "name": "careerGrowth",
+              "value": "={{ $json[\"Do you see good career growth opportunities in the company?  \"] }}",
+              "type": "string"
+            },
+            {
+              "id": "9",
+              "name": "leaveIntent",
+              "value": "={{ $json[\"How likely are you to leave the company in the next 6 months?  \"] }}",
+              "type": "number"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "0671ad6e-7177-4d28-9a8d-f8ac2251fae9",
+      "name": "Prepare Data for Storage",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        896,
+        8
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Google Sheets Trigger": {
+      "main": [
+        [
+          {
+            "node": "Calculate Risk Score",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calculate Risk Score": {
+      "main": [
+        [
+          {
+            "node": "Route by Risk Level",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route by Risk Level": {
+      "main": [
+        [
+          {
+            "node": "Format Alert Message",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Prepare Data for Storage",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Alert Message": {
+      "main": [
+        [
+          {
+            "node": "Prepare Data for Storage",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Data for Storage": {
+      "main": [
+        []
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "7311a5fc-d270-4f2e-b9fb-14c2a6134c00",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "1989152239b3f3cd60a48bb514732096745788d367db7055cec770309e55d73a"
+  },
+  "id": "3ocXUjLT1o4eAEfy",
+  "tags": []
+}
