@@ -32,7 +32,8 @@ The `Calculate Risk Score` node applies the following weights:
 
 ### 3. Routing & Alerting
 * **Conditional Routing:** If the `riskLevel` is "High" (score ≥ 60), the system triggers an alert.
-* **Alert Formatting:** Generates a detailed message including the employee's email and specific survey results for context.
+* **Alert Formatting:** Generates a detailed message including the employee's email and specific survey results for context.<img width="1400" height="894" alt="Screenshot 2026-03-31 160641" src="https://github.com/user-attachments/assets/6493f9c8-807d-48c3-9839-cd215a791035" />
+
 
 ---
 
@@ -43,7 +44,8 @@ The associated dashboard provides a bird's-eye view of organizational health bas
 * **Average Job Satisfaction:** Currently sitting at **3.86**.
 * **High-Risk Identification:** The dashboard highlights specific "High Risk" individuals (2 out of 7 total responses in the current dataset).
 * **Career Growth Correlation:** A clear trend shows that employees who do not see career growth opportunities have significantly higher average risk scores.
-* **Risk Level Distribution:** Visualized via a pie chart showing **29% High Risk** vs **71% Low Risk**.
+* **Risk Level Distribution:** Visualized via a pie chart showing **29% High Risk** vs **71% Low Risk**.<img width="1374" height="761" alt="Screenshot 2026-04-01 111251" src="https://github.com/user-attachments/assets/fedcde5d-c3a2-4e77-8396-9f203a9ad67d" />
+
 
 ---
 
